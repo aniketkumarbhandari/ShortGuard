@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 
 import requests
 import urllib.parse
@@ -8,8 +7,16 @@ import sys
 # Define a list of known URL shortener services (you can expand this list)
 SHORTENER_DOMAINS = [
     'bit.ly', 'goo.gl', 't.co', 'tinyurl.com', 'ow.ly', 'buff.ly', 'is.gd',
-    't.ly', 'cutt.ly', 'rebrand.ly', 'bl.ink', 'rb.gy', 'shorte.st'
+    't.ly', 'cutt.ly', 'rebrand.ly', 'bl.ink', 'rb.gy', 'shorte.st', 'shorturl.at'
 ]
+
+# Function to display the introductory page
+def display_intro():
+    print("=" * 60)
+    print(" " * 10 + "Shortguard: URL Shortener Exploit Detection")
+    print(" " * 20 + "Created by: Aniket")
+    print("=" * 60)
+    print("\nWelcome to Shortguard! This tool helps you detect potentially malicious URLs hidden behind short links.\n")
 
 # Check if the URL belongs to a known URL shortener
 def is_shortened_url(url):
@@ -22,21 +29,40 @@ def unshorten_url(url):
     try:
         response = requests.head(url, allow_redirects=True, timeout=5)
         return response.url
-    except requests.RequestException:
+    except requests.RequestException as e:
+        print(f"[ERROR] Could not resolve shortened URL: {e}")
         return None
+
+
+import base64
 
 # Check if the URL is blacklisted using VirusTotal Public API (replace 'YOUR_API_KEY' with your actual API key)
 def check_blacklist(url):
     try:
-        api_key = "YOUR_API_KEY"
+        api_key = "383113349314c71f69393e1009f77c5743117033d1eff9cbc9f532ee9022af33"  # Replace this with your actual VirusTotal API key
         headers = {
             "x-apikey": api_key
         }
-        response = requests.get(f"https://www.virustotal.com/api/v3/urls/{url}", headers=headers)
+
+        # VirusTotal requires the URL to be base64-encoded
+        url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
+
+        # API endpoint for URL analysis
+vt_url = f"https://www.virustotal.com/api/v3/urls/{url_id}"
+        
+        print(f"[DEBUG] Sending request to VirusTotal for URL: {url}")
+        response = requests.get(vt_url, headers=headers)
+
         if response.status_code == 200:
             data = response.json()
-            return data['data']['attributes']['last_analysis_stats']
-        return None
+            analysis_stats = data.get('data', {}).get('attributes', {}).get('last_analysis_stats', {})
+            print(f"[DEBUG] VirusTotal response: {analysis_stats}")
+            return analysis_stats
+        else:
+            print(f"[ERROR] VirusTotal API returned status code: {response.status_code}")
+            print(f"[DEBUG] Response content: {response.text}")
+            return None
+
     except Exception as e:
         print(f"[ERROR] VirusTotal lookup failed: {e}")
         return None
@@ -71,25 +97,33 @@ def check_url(url):
         original_url = url
 
     # Step 2: Check for blacklist
-    blacklist_result = check_blacklist(original_url)
+blacklist_result = check_blacklist(original_url)
     if blacklist_result:
-        if blacklist_result['malicious'] > 0:
+        if blacklist_result.get('malicious', 0) > 0:
             print("[WARNING] URL detected as malicious based on blacklist.")
         else:
             print("[INFO] URL appears safe according to blacklist check.")
+    else:
+        print("[INFO] No blacklist data available for this URL.")
 
     # Step 3: Phishing detection
     if detect_phishing(original_url):
         print("[WARNING] Potential phishing URL detected!")
+    else:
+        print("[INFO] No phishing indicators found.")
 
-    print("[INFO] URL analysis completed.")
+    print("[INFO] URL analysis completed.\n")
 
-# Command-line interface
+# Entry point of the script
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python3 url_checker.py <URL>")
-        sys.exit(1)
+    # Display the intro page
+    display_intro()
 
-    url_to_check = sys.argv[1]
-    check_url(url_to_check)
-
+    # Prompt user for input URL
+    url_to_check = input("Please paste the URL you want to analyze: ").strip()
+    
+    # Check if the user entered a URL
+    if url_to_check:
+        check_url(url_to_check)
+    else:
+        print("[ERROR] No URL provided. Please try again.")
