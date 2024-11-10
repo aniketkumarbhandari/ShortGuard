@@ -1,60 +1,95 @@
-import requests
-import tldextract
+#!/usr/bin/env python3
 
-# List of common URL shorteners
-# These are popular services that users often employ to shorten links
-SHORTENERS = [
-    'bit.ly',    # Bitly
-    'tinyurl.com',  # TinyURL
-    'goo.gl',    # Google URL Shortener (now discontinued)
-    'ow.ly',     # Ow.ly (Hootsuite's URL shortener)
-    'is.gd',     # is.gd
-    'shorte.st',  # Shorte.st
-    'rebrandly.com',  # Rebrandly
-    't.co',      # Twitter's URL shortener
-    'adf.ly',    # AdFly
+import requests
+import urllib.parse
+import re
+import sys
+
+# Define a list of known URL shortener services (you can expand this list)
+SHORTENER_DOMAINS = [
+    'bit.ly', 'goo.gl', 't.co', 'tinyurl.com', 'ow.ly', 'buff.ly', 'is.gd',
+    't.ly', 'cutt.ly', 'rebrand.ly', 'bl.ink', 'rb.gy', 'shorte.st'
 ]
 
+# Check if the URL belongs to a known URL shortener
 def is_shortened_url(url):
-    """Check if a URL is a shortened URL."""
-    extracted = tldextract.extract(url)
-    return extracted.domain in SHORTENERS
+    parsed_url = urllib.parse.urlparse(url)
+    domain = parsed_url.netloc.lower()
+    return any(domain.endswith(shortener) for shortener in SHORTENER_DOMAINS)
 
-def expand_url(url):
-    """Expand a shortened URL to its original form."""
+# Unshorten URL by following redirects
+def unshorten_url(url):
     try:
-        response = requests.head(url, allow_redirects=True)
+        response = requests.head(url, allow_redirects=True, timeout=5)
         return response.url
-    except requests.RequestException as e:
-        print(f"Error expanding URL: {e}")
+    except requests.RequestException:
         return None
 
-def is_phishing_url(url):
-    """Basic phishing detection based on common indicators."""
-    # This is a simple check, you can expand this with more sophisticated checks
-    phishing_indicators = ['login', 'secure', 'update', 'verify']
-    for indicator in phishing_indicators:
-        if indicator in url.lower():
+# Check if the URL is blacklisted using VirusTotal Public API (replace 'YOUR_API_KEY' with your actual API key)
+def check_blacklist(url):
+    try:
+        api_key = "YOUR_API_KEY"
+        headers = {
+            "x-apikey": api_key
+        }
+        response = requests.get(f"https://www.virustotal.com/api/v3/urls/{url}", headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            return data['data']['attributes']['last_analysis_stats']
+        return None
+    except Exception as e:
+        print(f"[ERROR] VirusTotal lookup failed: {e}")
+        return None
+
+# Detect phishing by checking for common phishing patterns in the URL
+def detect_phishing(url):
+    phishing_indicators = [
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',  # IP address in URL
+        r'@',                                   # "@" symbol in URL
+        r'https?://[^/]*[^\w\-\.]$',            # Special characters in domain
+        r'login|signin|secure|account|update|verify|password|bank|paypal'
+    ]
+    for pattern in phishing_indicators:
+        if re.search(pattern, url, re.IGNORECASE):
             return True
     return False
 
+# Main function to check URL
 def check_url(url):
-    """Main function to check if a URL is shortened and possibly phishing."""
+    print(f"[INFO] Checking URL: {url}")
+    
+    # Step 1: Check if it's a shortened URL
     if is_shortened_url(url):
-        print(f"Detected shortened URL: {url}")
-        expanded_url = expand_url(url)
-        if expanded_url:
-            print(f"Expanded URL: {expanded_url}")
-            if is_phishing_url(expanded_url):
-                print(f"Warning: The expanded URL may be a phishing attempt!")
-            else:
-                print("The expanded URL seems safe.")
+        print("[INFO] Shortened URL detected.")
+        original_url = unshorten_url(url)
+        if original_url:
+            print(f"[INFO] Resolved to: {original_url}")
         else:
-            print("Could not expand the URL.")
+            print("[ERROR] Could not resolve shortened URL.")
+            return
     else:
-        print("The URL is not shortened.")
+        original_url = url
 
+    # Step 2: Check for blacklist
+    blacklist_result = check_blacklist(original_url)
+    if blacklist_result:
+        if blacklist_result['malicious'] > 0:
+            print("[WARNING] URL detected as malicious based on blacklist.")
+        else:
+            print("[INFO] URL appears safe according to blacklist check.")
+
+    # Step 3: Phishing detection
+    if detect_phishing(original_url):
+        print("[WARNING] Potential phishing URL detected!")
+
+    print("[INFO] URL analysis completed.")
+
+# Command-line interface
 if __name__ == "__main__":
-    # Example usage
-    test_url = input("Enter a URL to check: ")
-    check_url(test_url)
+    if len(sys.argv) != 2:
+        print("Usage: python3 url_checker.py <URL>")
+        sys.exit(1)
+
+    url_to_check = sys.argv[1]
+    check_url(url_to_check)
+
