@@ -1,0 +1,60 @@
+import requests
+import tldextract
+
+# List of common URL shorteners
+# These are popular services that users often employ to shorten links
+SHORTENERS = [
+    'bit.ly',    # Bitly
+    'tinyurl.com',  # TinyURL
+    'goo.gl',    # Google URL Shortener (now discontinued)
+    'ow.ly',     # Ow.ly (Hootsuite's URL shortener)
+    'is.gd',     # is.gd
+    'shorte.st',  # Shorte.st
+    'rebrandly.com',  # Rebrandly
+    't.co',      # Twitter's URL shortener
+    'adf.ly',    # AdFly
+]
+
+def is_shortened_url(url):
+    """Check if a URL is a shortened URL."""
+    extracted = tldextract.extract(url)
+    return extracted.domain in SHORTENERS
+
+def expand_url(url):
+    """Expand a shortened URL to its original form."""
+    try:
+        response = requests.head(url, allow_redirects=True)
+        return response.url
+    except requests.RequestException as e:
+        print(f"Error expanding URL: {e}")
+        return None
+
+def is_phishing_url(url):
+    """Basic phishing detection based on common indicators."""
+    # This is a simple check, you can expand this with more sophisticated checks
+    phishing_indicators = ['login', 'secure', 'update', 'verify']
+    for indicator in phishing_indicators:
+        if indicator in url.lower():
+            return True
+    return False
+
+def check_url(url):
+    """Main function to check if a URL is shortened and possibly phishing."""
+    if is_shortened_url(url):
+        print(f"Detected shortened URL: {url}")
+        expanded_url = expand_url(url)
+        if expanded_url:
+            print(f"Expanded URL: {expanded_url}")
+            if is_phishing_url(expanded_url):
+                print(f"Warning: The expanded URL may be a phishing attempt!")
+            else:
+                print("The expanded URL seems safe.")
+        else:
+            print("Could not expand the URL.")
+    else:
+        print("The URL is not shortened.")
+
+if __name__ == "__main__":
+    # Example usage
+    test_url = input("Enter a URL to check: ")
+    check_url(test_url)
