@@ -18,5 +18,5 @@ Follow these steps to install and use the tool:
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/your-username/url-shortener-exploit-detection.git
+   git clone the repository
    cd url-shortener-exploit-detection
