@@ -4,7 +4,7 @@ import urllib.parse
 import re
 import sys
 
-# Define a list of known URL shortener services (you can expand this list)
+# List of known URL shortener services (you can expand this list)
 SHORTENER_DOMAINS = [
     'bit.ly', 'goo.gl', 't.co', 'tinyurl.com', 'ow.ly', 'buff.ly', 'is.gd',
     't.ly', 'cutt.ly', 'rebrand.ly', 'bl.ink', 'rb.gy', 'shorte.st', 'shorturl.at'
@@ -24,7 +24,7 @@ def is_shortened_url(url):
     domain = parsed_url.netloc.lower()
     return any(domain.endswith(shortener) for shortener in SHORTENER_DOMAINS)
 
-# Unshorten URL by following redirects
+# Unshortening URL 
 def unshorten_url(url):
     try:
         response = requests.head(url, allow_redirects=True, timeout=5)
@@ -36,10 +36,10 @@ def unshorten_url(url):
 
 import base64
 
-# Check if the URL is blacklisted using VirusTotal Public API (replace 'YOUR_API_KEY' with your actual API key)
+# To check if the URL is blacklisted using VirusTotal Public API (replace 'YOUR_API_KEY' with your actual API key)
 def check_blacklist(url):
     try:
-        api_key = "383113349314c71f69393e1009f77c5743117033d1eff9cbc9f532ee9022af33"  # Replace this with your actual VirusTotal API key
+        api_key = "383113349314c71f69393e1009f77c5743117033d1eff9cbc9f532ee9022af33"  
         headers = {
             "x-apikey": api_key
         }
@@ -73,7 +73,7 @@ def detect_phishing(url):
         r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',  # IP address in URL
         r'@',                                   # "@" symbol in URL
         r'https?://[^/]*[^\w\-\.]$',            # Special characters in domain
-        r'login|signin|secure|account|update|verify|password|bank|paypal'
+        r'login|signin|secure|account|update|verify|password|bank|paypal|phonepe|paytm|bharatpe|googlepay'
     ]
     for pattern in phishing_indicators:
         if re.search(pattern, url, re.IGNORECASE):
