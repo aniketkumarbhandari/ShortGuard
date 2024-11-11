@@ -88,6 +88,9 @@ def detect_phishing(url):
 def check_url(url):
     print(f"[INFO] Checking URL: {url}")
     
+    # Initialize original_url with the input URL by default
+    original_url = url
+
     # Step 1: Check if it's a shortened URL
     if is_shortened_url(url):
         print("[INFO] Shortened URL detected.")
@@ -97,26 +100,25 @@ def check_url(url):
         else:
             print("[ERROR] Could not resolve shortened URL.")
             return
+
+    # Step 2: Check for blacklist
+    blacklist_result = check_blacklist(original_url)
+    if blacklist_result:
+        if blacklist_result.get('malicious', 0) > 0:
+            print("[WARNING] URL detected as malicious based on blacklist.")
+        else:
+            print("[INFO] URL appears safe according to blacklist check.")
     else:
-        original_url = url
+        print("[INFO] No blacklist data available for this URL.")
 
- # Step 2: Check for blacklist
-blacklist_result = check_blacklist(original_url)
-if blacklist_result:
-    if blacklist_result.get('malicious', 0) > 0:
-        print("[WARNING] URL detected as malicious based on blacklist.")
+    # Step 3: Phishing detection
+    if detect_phishing(original_url):
+        print("[WARNING] Potential phishing URL detected!")
     else:
-        print("[INFO] URL appears safe according to blacklist check.")
-else:
-    print("[INFO] No blacklist data available for this URL.")
+        print("[INFO] No phishing indicators found.")
 
-# Step 3: Phishing detection
-if detect_phishing(original_url):
-    print("[WARNING] Potential phishing URL detected!")
-else:
-    print("[INFO] No phishing indicators found.")
+    print("[INFO] URL analysis completed.\n")
 
-print("[INFO] URL analysis completed.\n")
 
 # Entry point of the script
 if __name__ == "__main__":
