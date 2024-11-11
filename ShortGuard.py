@@ -100,23 +100,23 @@ def check_url(url):
     else:
         original_url = url
 
-    # Step 2: Check for blacklist
+ # Step 2: Check for blacklist
 blacklist_result = check_blacklist(original_url)
-    if blacklist_result:
-        if blacklist_result.get('malicious', 0) > 0:
-            print("[WARNING] URL detected as malicious based on blacklist.")
-        else:
-            print("[INFO] URL appears safe according to blacklist check.")
+if blacklist_result:
+    if blacklist_result.get('malicious', 0) > 0:
+        print("[WARNING] URL detected as malicious based on blacklist.")
     else:
-        print("[INFO] No blacklist data available for this URL.")
+        print("[INFO] URL appears safe according to blacklist check.")
+else:
+    print("[INFO] No blacklist data available for this URL.")
 
-    # Step 3: Phishing detection
-    if detect_phishing(original_url):
-        print("[WARNING] Potential phishing URL detected!")
-    else:
-        print("[INFO] No phishing indicators found.")
+# Step 3: Phishing detection
+if detect_phishing(original_url):
+    print("[WARNING] Potential phishing URL detected!")
+else:
+    print("[INFO] No phishing indicators found.")
 
-    print("[INFO] URL analysis completed.\n")
+print("[INFO] URL analysis completed.\n")
 
 # Entry point of the script
 if __name__ == "__main__":
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     # Prompt user for input URL
     url_to_check = input("Please paste the URL you want to analyze: ").strip()
-    
+
     # Check if the user entered a URL
     if url_to_check:
         check_url(url_to_check)
