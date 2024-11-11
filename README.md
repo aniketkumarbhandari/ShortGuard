@@ -19,4 +19,5 @@ Follow these steps to install and use the tool:
 1. **Clone the Repository**
    ```bash
    git clone the repository
-   cd url-shortener-exploit-detection
+   cd ShortGuard
+   python3 ShortGuard.py
