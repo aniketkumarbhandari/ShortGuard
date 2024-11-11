@@ -37,9 +37,12 @@ def unshorten_url(url):
 import base64
 
 # To check if the URL is blacklisted using VirusTotal Public API (replace 'YOUR_API_KEY' with your actual API key)
+import base64
+import requests
+
 def check_blacklist(url):
     try:
-        api_key = "383113349314c71f69393e1009f77c5743117033d1eff9cbc9f532ee9022af33"  
+        api_key = "383113349314c71f69939e1009f77c574311703d1eff9cbc9f532ee9022af33"
         headers = {
             "x-apikey": api_key
         }
@@ -48,8 +51,8 @@ def check_blacklist(url):
         url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
 
         # API endpoint for URL analysis
-vt_url = f"https://www.virustotal.com/api/v3/urls/{url_id}"
-        
+        vt_url = f"https://www.virustotal.com/api/v3/urls/{url_id}"
+
         print(f"[DEBUG] Sending request to VirusTotal for URL: {url}")
         response = requests.get(vt_url, headers=headers)
 
@@ -66,6 +69,7 @@ vt_url = f"https://www.virustotal.com/api/v3/urls/{url_id}"
     except Exception as e:
         print(f"[ERROR] VirusTotal lookup failed: {e}")
         return None
+
 
 # Detect phishing by checking for common phishing patterns in the URL
 def detect_phishing(url):
